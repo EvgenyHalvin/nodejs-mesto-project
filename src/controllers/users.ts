@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import User from "../models/user";
-import { ErrorStatusesEnum, TRequest } from "./types";
+import { ErrorStatusesEnum, TRequest } from "../types";
 
 const SERVER_ERROR = "На сервере произошла ошибка";
 const USER_NOT_FOUND = "Пользователь по указанному _id не найден";
@@ -111,9 +111,7 @@ export const login = (req: Request, res: Response) => {
 
   User.findUserByCredentials(login, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, "some-secret-key", {
-        expiresIn: "7d",
-      });
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
       res
         .cookie("jwt", token, {
           maxAge: 3600 * 1000, // 1 час
