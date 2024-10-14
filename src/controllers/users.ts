@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 import User from "../models/user";
 import { ErrorStatusesEnum, TRequest } from "./types";
@@ -12,6 +13,7 @@ const INCORRECT_UPDATE_USER_DATA =
   "Переданы некорректные данные при обновлении профиля";
 const INCORRECT_UPDATE_USER_AVATAR_DATA =
   "Переданы некорректные данные при обновлении аватара";
+const UNAUTHORIZED_ERROR = "Неправильные почта или пароль";
 
 export const getUsers = (_req: Request, res: Response) => {
   User.find({})
@@ -101,5 +103,27 @@ export const updateAvatar = (req: Request, res: Response) => {
           .status(ErrorStatusesEnum.SERVER_ERROR)
           .send({ message: SERVER_ERROR });
       }
+    });
+};
+
+export const login = (req: Request, res: Response) => {
+  const { login, password } = req.body;
+
+  User.findUserByCredentials(login, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, "some-secret-key", {
+        expiresIn: "7d",
+      });
+      res
+        .cookie("jwt", token, {
+          maxAge: 3600 * 1000, // 1 час
+          httpOnly: true,
+        })
+        .end();
+    })
+    .catch(() => {
+      res
+        .status(ErrorStatusesEnum.UNAUTHORIZED)
+        .send({ message: UNAUTHORIZED_ERROR });
     });
 };

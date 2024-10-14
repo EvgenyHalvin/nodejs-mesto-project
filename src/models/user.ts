@@ -78,4 +78,4 @@ userSchema.static(
   }
 );
 
-export default model("user", userSchema);
+export default model<TUser, TUserModel>("user", userSchema);
