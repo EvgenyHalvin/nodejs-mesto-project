@@ -1,14 +1,11 @@
 import { NextFunction, Response, Request } from "express";
 import jwt from "jsonwebtoken";
+
 import { ErrorStatusesEnum } from "../types";
 
 const AUTHORIZATION_NEEDED = "Необходима авторизация";
 
-export const authMiddleWare = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export default (req: Request, res: Response, next: NextFunction) => {
   const authorization = req.cookies.jwt;
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
@@ -16,6 +13,7 @@ export const authMiddleWare = (
       .status(ErrorStatusesEnum.UNAUTHORIZED)
       .send({ message: AUTHORIZATION_NEEDED });
   }
+
   const token: string = authorization.replace("Bearer ", "");
   let payload;
 

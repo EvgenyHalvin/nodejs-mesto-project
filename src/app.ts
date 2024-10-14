@@ -5,6 +5,8 @@ import helmet from "helmet";
 import users from "./routes/users";
 import cards from "./routes/cards";
 
+import { createUser, login } from "./controllers/users";
+
 mongoose.connect("mongodb://localhost:27017/mestodb");
 
 const { PORT = 3000 } = process.env;
@@ -12,6 +14,9 @@ const app = express();
 
 app.use(helmet());
 app.use(express.json());
+
+app.post("/signup", createUser);
+app.post("/signin", login);
 
 app.use("/users", users);
 app.use("/cards", cards);
