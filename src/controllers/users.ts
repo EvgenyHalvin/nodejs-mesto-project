@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 
 import User from "../models/user";
 import { ErrorStatusesEnum, TRequest } from "./types";
@@ -38,9 +39,11 @@ export const getUser = (req: Request, res: Response) => {
 };
 
 export const createUser = (req: Request, res: Response) => {
-  const { name, about, avatar } = req.body;
+  const { password, ...rest } = req.body;
 
-  User.create({ name, about, avatar })
+  bcrypt
+    .hash(password, 10)
+    .then((hash) => User.create({ ...rest, password: hash }))
     .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
       if (err.name === "ValidationError") {
