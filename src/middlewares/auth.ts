@@ -1,13 +1,15 @@
 import { NextFunction, Response, Request } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
+import { UnauthorizedError } from "../errors";
+
 const AUTHORIZATION_NEEDED = "Необходима авторизация";
 
 export default (req: Request, res: Response, next: NextFunction) => {
   const authorization = req.cookies.jwt;
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
-    next(AUTHORIZATION_NEEDED);
+    next(new UnauthorizedError(AUTHORIZATION_NEEDED));
   }
 
   const token: string = authorization.replace("Bearer ", "");
@@ -21,6 +23,6 @@ export default (req: Request, res: Response, next: NextFunction) => {
     req.user = payload;
     next();
   } catch {
-    next(new Error(AUTHORIZATION_NEEDED));
+    next(new UnauthorizedError(AUTHORIZATION_NEEDED));
   }
 };

@@ -1,11 +1,16 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import User from "../models/user";
-import { ErrorStatusesEnum, TRequest } from "../types";
+import { TRequest } from "../types";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../errors";
 
-const SERVER_ERROR = "На сервере произошла ошибка";
 const USER_NOT_FOUND = "Пользователь по указанному _id не найден";
 const INCORRECT_CREATE_USER_DATA =
   "Переданы некорректные данные при создании пользователя";
@@ -14,33 +19,31 @@ const INCORRECT_UPDATE_USER_DATA =
 const INCORRECT_UPDATE_USER_AVATAR_DATA =
   "Переданы некорректные данные при обновлении аватара";
 const UNAUTHORIZED_ERROR = "Неправильные почта или пароль";
+const INCORRECT_USER_DATA =
+  "Переданны некорректные данные при попытке получить данные пользователя";
 
-export const getUsers = (_req: Request, res: Response) => {
+export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() =>
-      res.status(ErrorStatusesEnum.SERVER_ERROR).send({ message: SERVER_ERROR })
-    );
+    .catch(() => next());
 };
 
-export const getUser = (req: Request, res: Response) => {
+export const getUser = (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.userId;
 
   User.findById(userId)
-    .orFail(new Error(USER_NOT_FOUND))
+    .orFail(new NotFoundError(USER_NOT_FOUND))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.message === USER_NOT_FOUND) {
-        res.status(ErrorStatusesEnum.NOT_FOUND).send({ message: err.message });
+        next(new NotFoundError(USER_NOT_FOUND));
       } else {
-        res
-          .status(ErrorStatusesEnum.SERVER_ERROR)
-          .send({ message: SERVER_ERROR });
+        next();
       }
     });
 };
 
-export const createUser = (req: Request, res: Response) => {
+export const createUser = (req: Request, res: Response, next: NextFunction) => {
   const { password, ...rest } = req.body;
 
   bcrypt
@@ -48,17 +51,19 @@ export const createUser = (req: Request, res: Response) => {
     .then((hash) => User.create({ ...rest, password: hash }))
     .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        res.status(ErrorStatusesEnum.BAD_REQUEST).send({
-          message: INCORRECT_CREATE_USER_DATA,
-        });
+      if (err.code === 11000) {
+        next(
+          new ConflictError("Пользователь с такой почтой уже зарегистрирован")
+        );
+      } else if (err.name === "ValidationError") {
+        next(new BadRequestError(INCORRECT_CREATE_USER_DATA));
       } else {
-        res.status(ErrorStatusesEnum.SERVER_ERROR).send(SERVER_ERROR);
+        next();
       }
     });
 };
 
-export const updateUser = (req: Request, res: Response) => {
+export const updateUser = (req: Request, res: Response, next: NextFunction) => {
   const { name, about } = req.body;
   const userId = (req as TRequest).user._id;
 
@@ -67,46 +72,42 @@ export const updateUser = (req: Request, res: Response) => {
     { name, about },
     { new: true, runValidators: true }
   )
-    .orFail(new Error(USER_NOT_FOUND))
+    .orFail(new NotFoundError(USER_NOT_FOUND))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === "ValidationError") {
-        res.status(ErrorStatusesEnum.BAD_REQUEST).send({
-          message: INCORRECT_UPDATE_USER_DATA,
-        });
+        next(new BadRequestError(INCORRECT_UPDATE_USER_DATA));
       } else if (err.message === USER_NOT_FOUND) {
-        res.status(ErrorStatusesEnum.NOT_FOUND).send({ message: err.message });
+        next(new NotFoundError(USER_NOT_FOUND));
       } else {
-        res
-          .status(ErrorStatusesEnum.SERVER_ERROR)
-          .send({ message: SERVER_ERROR });
+        next();
       }
     });
 };
 
-export const updateAvatar = (req: Request, res: Response) => {
+export const updateAvatar = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { avatar } = req.body;
   const userId = (req as TRequest).user._id;
 
   User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
-    .orFail(new Error(USER_NOT_FOUND))
+    .orFail(new NotFoundError(USER_NOT_FOUND))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === "ValidationError") {
-        res.status(ErrorStatusesEnum.BAD_REQUEST).send({
-          message: INCORRECT_UPDATE_USER_AVATAR_DATA,
-        });
+        next(new BadRequestError(INCORRECT_UPDATE_USER_AVATAR_DATA));
       } else if (err.message === USER_NOT_FOUND) {
-        res.status(ErrorStatusesEnum.NOT_FOUND).send({ message: err.message });
+        next(new NotFoundError(USER_NOT_FOUND));
       } else {
-        res
-          .status(ErrorStatusesEnum.SERVER_ERROR)
-          .send({ message: SERVER_ERROR });
+        next();
       }
     });
 };
 
-export const login = (req: Request, res: Response) => {
+export const login = (req: Request, res: Response, next: NextFunction) => {
   const { login, password } = req.body;
 
   User.findUserByCredentials(login, password)
@@ -120,8 +121,25 @@ export const login = (req: Request, res: Response) => {
         .end();
     })
     .catch(() => {
-      res
-        .status(ErrorStatusesEnum.UNAUTHORIZED)
-        .send({ message: UNAUTHORIZED_ERROR });
+      next(new UnauthorizedError(UNAUTHORIZED_ERROR));
+    });
+};
+
+export const getCurrentUser = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = (req as TRequest).user._id;
+
+  User.findById(userId)
+    .orFail(new Error(USER_NOT_FOUND))
+    .then((user) => res.send({ data: user }))
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        next(new BadRequestError(INCORRECT_USER_DATA));
+      } else {
+        next();
+      }
     });
 };
