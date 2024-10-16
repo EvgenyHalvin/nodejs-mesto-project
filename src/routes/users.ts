@@ -6,12 +6,14 @@ import {
   getUser,
   updateUser,
   updateAvatar,
+  getCurrentUser,
 } from "../controllers/users";
 import { linkRegExp } from "../utils/regex";
 
 const router = Router();
 
 router.get("/", getUsers);
+router.get("/me", getCurrentUser);
 router.get(
   "/:userId",
   celebrate({

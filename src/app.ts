@@ -51,7 +51,6 @@ app.post(
 
 app.use(auth);
 
-// Роуты, не требующие авторизации
 app.use("/users", users);
 app.use("/cards", cards);
 

@@ -25,7 +25,7 @@ const INCORRECT_USER_DATA =
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => next());
+    .catch((err) => next(err));
 };
 
 export const getUser = (req: Request, res: Response, next: NextFunction) => {
@@ -38,18 +38,28 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
       if (err.message === USER_NOT_FOUND) {
         next(new NotFoundError(USER_NOT_FOUND));
       } else {
-        next();
+        next(err);
       }
     });
 };
 
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  const { password, ...rest } = req.body;
+  const { password, email } = req.body;
 
   bcrypt
     .hash(password, 10)
-    .then((hash) => User.create({ ...rest, password: hash }))
-    .then((user) => res.status(201).send({ data: user }))
+    .then((hash) => User.create({ email, password: hash }))
+    .then((user) => {
+      const { name, about, avatar, email } = user;
+      res.status(201).send({
+        data: {
+          name,
+          about,
+          avatar,
+          email,
+        },
+      });
+    })
     .catch((err) => {
       if (err.code === 11000) {
         next(
@@ -58,7 +68,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
       } else if (err.name === "ValidationError") {
         next(new BadRequestError(INCORRECT_CREATE_USER_DATA));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -80,7 +90,7 @@ export const updateUser = (req: Request, res: Response, next: NextFunction) => {
       } else if (err.message === USER_NOT_FOUND) {
         next(new NotFoundError(USER_NOT_FOUND));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -102,20 +112,17 @@ export const updateAvatar = (
       } else if (err.message === USER_NOT_FOUND) {
         next(new NotFoundError(USER_NOT_FOUND));
       } else {
-        next();
+        next(err);
       }
     });
 };
 
 export const login = (req: Request, res: Response, next: NextFunction) => {
-  const { login, password } = req.body;
+  const { email, password } = req.body;
 
-  User.findUserByCredentials(login, password)
+  User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!process.env.JWT_SECRET) {
-        throw new Error("Server error");
-      }
-      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key');
       res
         .cookie("jwt", token, {
           maxAge: 3600 * 1000, // 1 час
@@ -125,7 +132,7 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
     })
     .catch((err: Error) => {
       if (err.message === "Server error") {
-        next();
+        next(err);
       } else {
         next(new UnauthorizedError(UNAUTHORIZED_ERROR));
       }
@@ -146,7 +153,7 @@ export const getCurrentUser = (
       if (err.name === "ValidationError") {
         next(new BadRequestError(INCORRECT_USER_DATA));
       } else {
-        next();
+        next(err);
       }
     });
 };

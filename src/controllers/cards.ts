@@ -14,7 +14,7 @@ const FORBIDDEN_ERROR = "Вы не можете удалить чужую кар
 export const getCards = (_req: Request, res: Response, next: NextFunction) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch(() => next());
+    .catch((err) => next(err));
 };
 
 export const createCard = (req: Request, res: Response, next: NextFunction) => {
@@ -27,7 +27,7 @@ export const createCard = (req: Request, res: Response, next: NextFunction) => {
       if (err.name === "ValidationError") {
         next(new BadRequestError(INCORRECT_CREATE_CARD_DATA));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -50,7 +50,7 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
             if (err.message === CARD_NOT_FOUND) {
               next(new NotFoundError(CARD_NOT_FOUND));
             } else {
-              next();
+              next(err);
             }
           });
       }
@@ -74,7 +74,7 @@ export const likeCard = (req: Request, res: Response, next: NextFunction) => {
       } else if (err.message === CARD_NOT_FOUND) {
         next(new NotFoundError(CARD_NOT_FOUND));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -100,7 +100,7 @@ export const dislikeCard = (
       } else if (err.message === CARD_NOT_FOUND) {
         next(new NotFoundError(CARD_NOT_FOUND));
       } else {
-        next();
+        next(err);
       }
     });
 };
