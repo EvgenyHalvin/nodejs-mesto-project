@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
 import Card from "../models/card";
-import { TRequest } from "../types";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../errors";
 
 const CARD_NOT_FOUND = "Карточка по указанному _id не найдена";
@@ -18,7 +17,7 @@ export const getCards = (_req: Request, res: Response, next: NextFunction) => {
 };
 
 export const createCard = (req: Request, res: Response, next: NextFunction) => {
-  const owner = (req as TRequest).user._id;
+  const owner = req.user._id;
   const { name, link } = req.body;
 
   Card.create({ name, link, owner })
@@ -34,7 +33,7 @@ export const createCard = (req: Request, res: Response, next: NextFunction) => {
 
 export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
-  const currentUserId = (req as TRequest).user._id;
+  const currentUserId = req.user._id;
 
   Card.findById(cardId)
     .orFail(new Error(CARD_NOT_FOUND))
@@ -59,7 +58,7 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
 
 export const likeCard = (req: Request, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
-  const userId = (req as TRequest).user._id;
+  const userId = req.user._id;
 
   Card.findByIdAndUpdate(
     cardId,
@@ -85,7 +84,7 @@ export const dislikeCard = (
   next: NextFunction
 ) => {
   const { cardId } = req.params;
-  const userId = (req as TRequest).user._id;
+  const userId = req.user._id;
 
   Card.findByIdAndUpdate(
     cardId,

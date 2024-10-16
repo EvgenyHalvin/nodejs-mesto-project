@@ -17,6 +17,6 @@
     /* Completeness */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
-  "include": ["src/**/*.ts", "global.d.ts"],
+  "include": ["src/**/*.ts", "global.d.ts", "express.d.ts"],
   "exclude": ["node_modules"]
 }

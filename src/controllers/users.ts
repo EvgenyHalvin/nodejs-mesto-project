@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import User from "../models/user";
-import { TRequest } from "../types";
 import {
   BadRequestError,
   ConflictError,
@@ -65,7 +64,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
 
 export const updateUser = (req: Request, res: Response, next: NextFunction) => {
   const { name, about } = req.body;
-  const userId = (req as TRequest).user._id;
+  const userId = req.user._id;
 
   User.findByIdAndUpdate(
     userId,
@@ -91,7 +90,7 @@ export const updateAvatar = (
   next: NextFunction
 ) => {
   const { avatar } = req.body;
-  const userId = (req as TRequest).user._id;
+  const userId = req.user._id;
 
   User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
     .orFail(new NotFoundError(USER_NOT_FOUND))
@@ -137,7 +136,7 @@ export const getCurrentUser = (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = (req as TRequest).user._id;
+  const userId = req.user._id;
 
   User.findById(userId)
     .orFail(new Error(USER_NOT_FOUND))
