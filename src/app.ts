@@ -11,6 +11,8 @@ import auth from "./middlewares/auth";
 import { requestLogger, errorLogger } from "./middlewares/logger";
 import { errorHandler } from "./middlewares/error-handler";
 
+import { NotFoundError } from "./errors";
+
 mongoose.connect("mongodb://localhost:27017/mestodb");
 
 const { PORT = 3000 } = process.env;
@@ -29,8 +31,8 @@ app.use(auth);
 app.use("/users", users);
 app.use("/cards", cards);
 
-app.use("*", (req, res) => {
-  res.status(404).send({ message: "Запрашиваемый ресурс не найден" });
+app.use("*", (req, res, next) => {
+  next(new NotFoundError("Запрашиваемый ресурс не найден"));
 });
 
 app.use(errorLogger);
