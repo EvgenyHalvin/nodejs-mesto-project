@@ -1,3 +1,5 @@
+import { Request } from "express";
+
 export enum ErrorStatusesEnum {
   BAD_REQUEST = 400,
   UNAUTHORIZED = 401,
@@ -8,3 +10,5 @@ export enum ErrorStatusesEnum {
 }
 
 export type TCustomError = Error & { statusCode?: ErrorStatusesEnum };
+
+export type TRequest = Request & { user: { _id: string } };

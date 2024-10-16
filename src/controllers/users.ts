@@ -9,6 +9,7 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../errors";
+import { TRequest } from "../types";
 
 const USER_NOT_FOUND = "Пользователь по указанному _id не найден";
 const INCORRECT_CREATE_USER_DATA =
@@ -19,7 +20,7 @@ const INCORRECT_UPDATE_USER_AVATAR_DATA =
   "Переданы некорректные данные при обновлении аватара";
 const UNAUTHORIZED_ERROR = "Неправильные почта или пароль";
 const INCORRECT_USER_DATA =
-  "Переданны некорректные данные при попытке получить данные пользователя";
+  "Переданы некорректные данные при попытке получить данные пользователя";
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
   User.find({})
@@ -64,7 +65,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
 
 export const updateUser = (req: Request, res: Response, next: NextFunction) => {
   const { name, about } = req.body;
-  const userId = req.user._id;
+  const userId = (req as TRequest).user._id;
 
   User.findByIdAndUpdate(
     userId,
@@ -90,7 +91,7 @@ export const updateAvatar = (
   next: NextFunction
 ) => {
   const { avatar } = req.body;
-  const userId = req.user._id;
+  const userId = (req as TRequest).user._id;
 
   User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
     .orFail(new NotFoundError(USER_NOT_FOUND))
@@ -136,7 +137,7 @@ export const getCurrentUser = (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.user._id;
+  const userId = (req as TRequest).user._id;
 
   User.findById(userId)
     .orFail(new Error(USER_NOT_FOUND))
