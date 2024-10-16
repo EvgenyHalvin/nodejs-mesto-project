@@ -112,6 +112,9 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
 
   User.findUserByCredentials(login, password)
     .then((user) => {
+      if (!process.env.JWT_SECRET) {
+        throw new Error("Server error");
+      }
       const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
       res
         .cookie("jwt", token, {
@@ -120,8 +123,12 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
         })
         .end();
     })
-    .catch(() => {
-      next(new UnauthorizedError(UNAUTHORIZED_ERROR));
+    .catch((err: Error) => {
+      if (err.message === "Server error") {
+        next();
+      } else {
+        next(new UnauthorizedError(UNAUTHORIZED_ERROR));
+      }
     });
 };
 

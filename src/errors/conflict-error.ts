@@ -1,4 +1,4 @@
-import { ErrorStatusesEnum } from "types";
+import { ErrorStatusesEnum } from "../types";
 
 export class ConflictError extends Error {
   statusCode: ErrorStatusesEnum;

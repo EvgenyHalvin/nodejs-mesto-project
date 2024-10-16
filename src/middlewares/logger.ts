@@ -5,7 +5,7 @@ import "winston-daily-rotate-file";
 export const requestLogger = expressWinston.logger({
   transports: [
     new winston.transports.DailyRotateFile({
-      filename: "request.log",
+      filename: "logs/request.log",
       datePattern: "YYYY-MM-DD-HH",
       maxFiles: 14,
     }),
@@ -16,7 +16,7 @@ export const requestLogger = expressWinston.logger({
 export const errorLogger = expressWinston.errorLogger({
   transports: [
     new winston.transports.DailyRotateFile({
-      filename: "error.log",
+      filename: "logs/error.log",
       datePattern: "YYYY-MM-DD-HH",
       maxFiles: 14,
     }),
