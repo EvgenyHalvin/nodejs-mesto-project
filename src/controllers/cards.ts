@@ -7,6 +7,8 @@ import { TRequest } from "../types";
 const CARD_NOT_FOUND = "Карточка по указанному _id не найдена";
 const INCORRECT_CREATE_CARD_DATA =
   "Переданы некорректные данные при создании карточки";
+const INCORRECT_DELETE_CARD_DATA =
+  "Переданы некорректные данные при удалении карточки";
 const INCORRECT_LIKE_DATA = "Переданы некорректные данные для постановки лайка";
 const INCORRECT_DISLIKE_DATA = "Переданы некорректные данные для снятии лайка";
 const FORBIDDEN_ERROR = "Вы не можете удалить чужую карточку";
@@ -53,6 +55,15 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
               next(err);
             }
           });
+      }
+    })
+    .catch((err) => {
+      if (err.name === "CastError") {
+        next(new BadRequestError(INCORRECT_DELETE_CARD_DATA));
+      } else if (err.message === CARD_NOT_FOUND) {
+        next(new NotFoundError(CARD_NOT_FOUND));
+      } else {
+        next(err);
       }
     });
 };

@@ -6,7 +6,7 @@ import { UnauthorizedError } from "../errors";
 const AUTHORIZATION_NEEDED = "Необходима авторизация";
 
 export default (req: Request, res: Response, next: NextFunction) => {
-  const authorization = req.headers.cookie;
+  const authorization = req.cookies.jwt;
 
   if (!authorization) {
     next(new UnauthorizedError(AUTHORIZATION_NEEDED));

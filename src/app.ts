@@ -1,7 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 import helmet from "helmet";
-import { celebrate, Joi } from "celebrate";
+import { celebrate, Joi, errors } from "celebrate";
+import cookieParser from "cookie-parser";
 
 import users from "./routes/users";
 import cards from "./routes/cards";
@@ -21,6 +22,7 @@ const { PORT = 3000 } = process.env;
 const app = express();
 
 app.use(helmet());
+app.use(cookieParser());
 app.use(express.json());
 
 app.use(requestLogger);
@@ -59,7 +61,7 @@ app.use("*", (req, res, next) => {
 });
 
 app.use(errorLogger);
-
+app.use(errors());
 app.use(errorHandler);
 
 app.listen(+PORT, () => {
